@@ -18,17 +18,49 @@ func (c *Counter) increment() {
 }
 
 func main() {
-	var counter Counter
-	var wg sync.WaitGroup
-
-	for i := 0; i < 1000; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			counter.increment()
-		}()
+	// var counter Counter
+	// var wg sync.WaitGroup
+	//
+	// for i := 0; i < 1000; i++ {
+	// 	wg.Add(1)
+	// 	go func() {
+	// 		defer wg.Done()
+	// 		counter.increment()
+	// 	}()
+	// }
+	//
+	// wg.Wait()
+	// fmt.Println("Final counter value:", counter.value)
+	var count int
+	var lock sync.Mutex
+	increment := func() {
+		lock.Lock()
+		defer lock.Unlock()
+		count++
+		fmt.Printf("Incrementing: %d\n", count)
 	}
-
-	wg.Wait()
-	fmt.Println("Final counter value:", counter.value)
+	decrement := func() {
+		lock.Lock()
+		defer lock.Unlock()
+		count--
+		fmt.Printf("Decrementing: %d\n", count)
+	}
+	// Increment
+	var arithmetic sync.WaitGroup
+	for i := 0; i <= 5; i++ {
+		arithmetic.Add(1)
+		go func() {
+			defer arithmetic.Done()
+			increment()
+		}()
+		for i := 0; i <= 5; i++ {
+			arithmetic.Add(1)
+			go func() {
+				defer arithmetic.Done()
+				decrement()
+			}()
+		}
+		arithmetic.Wait()
+		fmt.Println("Arithmetic complete.")
+	}
 }
